@@ -1,3 +1,10 @@
+"""
+    Author: Greg Held
+    Date: 10-29-2018
+    Description:
+        This project preforms convolution to edit an image with a kernel.
+"""
+
 import numpy as np
 from PIL import Image
 from math import sqrt
@@ -36,7 +43,7 @@ gaus_blur2 = [[1, 4, 6, 4, 1],
               [4, 16, 24, 16, 4],
               [1, 4, 6, 4, 1]]
 
-unsharp_ma = [[1, 4, 6, 4, 1],
+unsharp_mask = [[1, 4, 6, 4, 1],
               [4, 16, 24, 16, 4],
               [6, 24, -476, 24, 6],
               [4, 16, 24, 16, 4],
@@ -45,11 +52,19 @@ unsharp_ma = [[1, 4, 6, 4, 1],
 kernels = [["identity.jpg", identity, 1], ["edgeDetect1.jpg", ed1, 1], ["edgeDetect2.jpg", ed3, 1],
            ["edgeDetect3.jpg", ed4, 1], ["sharpen.jpg", sharpen, 1], ["boxBlur.jpg", box_blur, 9],
            ["gausBlur3x3.jpg", gaus_blur, 16],["guasBlur5x5.jpg", gaus_blur2, 256],
-           ["unsharp.jpg", unsharp_ma, -256]]
+           ["unsharp.jpg", unsharp_mask, -256]]
            
 file_data = np.genfromtxt("channel2.csv", delimiter=",")
-results_file = "results"
+results_dir = "results"
 
+
+def convolve_num_times(num, csv, kernel, div):
+    res = convolve(csv, kernel, div)
+    for i in range(num - 1):
+        res = convolve(res, kernel, div)
+    return res
+
+        
 def convolve(csv, kernel, div):
     x_dim = csv.shape[0]
     y_dim = csv.shape[1]
@@ -71,7 +86,6 @@ def convolve(csv, kernel, div):
             if i >= y_dim - ker_len + 1:
                 break
         
-    #width = int(sqrt(len(new_arr)))
     return np.asarray(new_arr).reshape(x_dim - ker_len + 1, y_dim - ker_len + 1)
 
 if not os.path.exists("results"):
@@ -82,7 +96,6 @@ if not os.path.exists("results"):
         exit()
 
 for k in kernels:
-    
-    img = Image.fromarray(convolve(convolve(np.copy(file_data), k[1], k[2]), k[1], k[2])).convert("L")
-    img.save("{}/{}".format(results_file, k[0]))
+    img = Image.fromarray(convolve_num_times(2, np.copy(file_data), k[1], k[2])).convert("L")
+    img.save("{}/{}".format(results_dir, k[0]))
 
